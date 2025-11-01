@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color.fromARGB(255, 0, 119, 255),
         ),
-        useMaterial3: true, // se estiver usando M3
+        useMaterial3: true,
       ),
 
       home: const MyHomePage(title: 'Filmes'),
@@ -42,10 +42,36 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: AppBar(
-        title: const Text('Filmes', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Filmes',
+          style: TextStyle(color: Colors.white),
+        ),
+
         backgroundColor: const Color.fromARGB(255, 34, 160, 209),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Equipe:'),
+                  content: const Text('Guilherme Mendes Gomes'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Ok'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
       ),
+
 
       body: Center(child: Text('Clique no + para cadastrar um filme')),
       floatingActionButton: Button(
