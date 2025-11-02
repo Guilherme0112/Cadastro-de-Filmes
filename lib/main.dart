@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/views/widgets/button.dart';
+import 'package:mobile/views/widgets/detalhes_filme.dart';
+import 'package:mobile/views/widgets/film_card.dart';
 import 'package:mobile/views/widgets/form_films.dart';
-
-final GlobalKey<MovieFormState> _movieFormKey = GlobalKey<MovieFormState>();
+import 'package:mobile/database.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,89 +14,120 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Filmes',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color.fromARGB(255, 0, 119, 255),
-        ),
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-
-      home: const MyHomePage(title: 'Filmes'),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final _formKey = GlobalKey<FormState>();
+  List<Map<String, dynamic>> _filmes = [];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  void initState() {
+    super.initState();
+    _loadFilmes();
+  }
 
-      appBar: AppBar(
-        title: const Text(
-          'Filmes',
-          style: TextStyle(color: Colors.white),
-        ),
+  Future<void> _loadFilmes() async {
+    final filmes = await DatabaseHelper.instance.getAll();
+    setState(() => _filmes = filmes);
+  }
 
-        backgroundColor: const Color.fromARGB(255, 34, 160, 209),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline, color: Colors.white),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Equipe:'),
-                  content: const Text('Guilherme Mendes Gomes'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Ok'),
-                    ),
-                  ],
+  Future<void> _adicionarFilme(Map<String, dynamic> filme) async {
+    await DatabaseHelper.instance.save(filme);
+    _loadFilmes();
+  }
+
+  void _mostrarOpcoesFilme(Map<String, dynamic> filme) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(5)),
+      ),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.info),
+            title: const Text('Detalhes'),
+            onTap: () {
+              Navigator.pop(context); // Fecha o BottomSheet
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DetalhesFilme(
+                    url: filme['url'] ?? '',
+                    title: filme['title'] ?? '',
+                    genre: filme['genre'] ?? '',
+                    duration: filme['duration'] ?? '',
+                    rating: (filme['rating'] as num?)?.toDouble() ?? 0.0,
+                    age: filme['age'] ?? '',
+                    year: filme['year'] ?? '',
+                    description: filme['description'] ?? '',
+                  ),
                 ),
               );
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Alterar'),
+            onTap: () {
+              Navigator.pop(context);
+              // Aqui você pode adicionar a lógica de editar o filme
+            },
+          ),
         ],
       ),
+    );
+  }
 
-
-      body: Center(child: Text('Clique no + para cadastrar um filme')),
-      floatingActionButton: Button(
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Filmes', style: TextStyle(color: Colors.white)),
+        backgroundColor: const Color.fromARGB(255, 34, 160, 209),
+      ),
+      body: _filmes.isEmpty
+          ? const Center(child: Text('Clique no + para cadastrar um filme'))
+          : ListView.builder(
+        itemCount: _filmes.length,
+        itemBuilder: (context, index) {
+          final f = _filmes[index];
+          return FilmeCard(
+            url: f['url'] ?? '',
+            title: f['title'] ?? '',
+            genre: f['genre'] ?? '',
+            duration: f['duration'] ?? '',
+            rating: (f['rating'] as num?)?.toDouble() ?? 0.0,
+            onTap: () => _mostrarOpcoesFilme(f),
+          );
+        },
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blue,
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => Scaffold(
-                appBar: AppBar(
-                  title: const Text(
-                    'Cadastrar Filme',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  backgroundColor: const Color.fromARGB(255, 34, 160, 209),
-                ),
-                body: MovieForm(
-                  onSave: (data) {
-                    print(data);
-                    Navigator.of(context).pop();
-                  },
-                  formKey: GlobalKey<FormState>(),
-                ),
+              builder: (_) => MovieForm(
+                onSave: _adicionarFilme,
               ),
             ),
           );
         },
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
