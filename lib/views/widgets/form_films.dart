@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
-import 'package:mobile/database.dart';
 
 class MovieForm extends StatefulWidget {
   final void Function(Map<String, dynamic>) onSave;
+  final Map<String, dynamic>? filme;
 
-  MovieForm({super.key, required this.onSave});
-  final _formKey = GlobalKey<FormState>();
+  const MovieForm({super.key, required this.onSave, this.filme});
 
   @override
   State<MovieForm> createState() => _MovieFormState();
@@ -27,6 +26,7 @@ class _MovieFormState extends State<MovieForm> {
   void _submit() async {
     if (_formKey.currentState!.validate()) {
       final filme = {
+        'id': widget.filme?['id'], // mantém o id se estiver editando
         'url': _urlController.text,
         'title': _titleController.text,
         'genre': _genreController.text,
@@ -37,16 +37,30 @@ class _MovieFormState extends State<MovieForm> {
         'description': _descriptionController.text,
       };
 
-      await DatabaseHelper.instance.save(filme);
-
       widget.onSave(filme);
 
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Filme salvo com sucesso!')),
+          SnackBar(content: Text(widget.filme == null ? 'Filme salvo!' : 'Filme atualizado!')),
         );
       }
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.filme != null) {
+      _urlController.text = widget.filme!['url'] ?? '';
+      _titleController.text = widget.filme!['title'] ?? '';
+      _genreController.text = widget.filme!['genre'] ?? '';
+      _durationController.text = widget.filme!['duration'] ?? '';
+      _yearController.text = widget.filme!['year'] ?? '';
+      _descriptionController.text = widget.filme!['description'] ?? '';
+      _rating = (widget.filme!['rating'] as num?)?.toDouble() ?? 0.0;
+      _ageRating = widget.filme!['age'] ?? 'Livre';
     }
   }
 

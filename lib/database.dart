@@ -46,9 +46,14 @@ class DatabaseHelper {
     return await db.query('filmes');
   }
 
-  Future<int> update(Map<String, dynamic> filme, int id) async {
+  Future<int> update(Map<String, dynamic> filme) async {
     final db = await instance.database;
-    return await db.update('filmes', filme, where: 'id = ?', whereArgs: [id]);
+    return await db.update(
+      'filmes',
+      filme,
+      where: 'id = ?',
+      whereArgs: [filme['id']],
+    );
   }
 
   Future<int> delete(int id) async {

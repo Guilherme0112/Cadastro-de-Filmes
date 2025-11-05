@@ -49,6 +49,12 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadFilmes();
   }
 
+  Future<void> _atualizarFilme(Map<String, dynamic> filme) async {
+    await DatabaseHelper.instance.update(filme);
+    _loadFilmes();
+  }
+
+
   void _mostrarOpcoesFilme(Map<String, dynamic> filme) {
     showModalBottomSheet(
       context: context,
@@ -85,7 +91,14 @@ class _MyHomePageState extends State<MyHomePage> {
             title: const Text('Alterar'),
             onTap: () {
               Navigator.pop(context);
-              // Aqui você pode adicionar a lógica de editar o filme
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => MovieForm(
+                    filme: filme,
+                    onSave: _atualizarFilme,
+                  ),
+                ),
+              );
             },
           ),
         ],
@@ -106,13 +119,32 @@ class _MyHomePageState extends State<MyHomePage> {
         itemCount: _filmes.length,
         itemBuilder: (context, index) {
           final f = _filmes[index];
-          return FilmeCard(
-            url: f['url'] ?? '',
-            title: f['title'] ?? '',
-            genre: f['genre'] ?? '',
-            duration: f['duration'] ?? '',
-            rating: (f['rating'] as num?)?.toDouble() ?? 0.0,
-            onTap: () => _mostrarOpcoesFilme(f),
+          return Dismissible(
+            key: Key(f['id'].toString()),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              color: Colors.red,
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: const Icon(Icons.delete, color: Colors.white),
+            ),
+            onDismissed: (direction) async {
+              await DatabaseHelper.instance.delete(f['id']);
+              setState(() {
+                _filmes.removeAt(index);
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${f['title']} foi deletado')),
+              );
+            },
+            child: FilmeCard(
+              url: f['url'] ?? '',
+              title: f['title'] ?? '',
+              genre: f['genre'] ?? '',
+              duration: f['duration'] ?? '',
+              rating: (f['rating'] as num?)?.toDouble() ?? 0.0,
+              onTap: () => _mostrarOpcoesFilme(f),
+            ),
           );
         },
       ),
